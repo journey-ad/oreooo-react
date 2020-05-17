@@ -34,7 +34,7 @@ const Footer = (props) => {
           </ul>
           <div className="meta">
             <a href="https://imjad.cn" target="_blank">journey-ad</a>
-            <a href="https://github.com/journey-ad/oreooo" target="_blank">Github</a>
+            <a href="https://github.com/journey-ad/oreooo-react" target="_blank">Github</a>
           </div>
         </footer>
       }
