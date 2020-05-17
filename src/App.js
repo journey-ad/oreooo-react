@@ -1,6 +1,5 @@
 import React, { useState, useEffect, Fragment } from 'react';
 import intl from 'react-intl-universal';
-import logo from './logo.svg';
 import 'normalize.css'
 import './assets/style/style.scss'
 
@@ -32,19 +31,6 @@ function App() {
     return
   }, [])
 
-  const bgColorArr = [
-    '#caad9f',
-    '#f0c869',
-    '#6abce0',
-    '#9ac4bd',
-    '#fad0c4',
-    '#9ec6cd'
-  ]
-
-  function onGenImage() {
-    setShow({ ...show, output: true })
-  }
-
   return (
     <div className="App">
       {
@@ -52,10 +38,7 @@ function App() {
         <Fragment>
           <Loading show={show} />
           <Container
-            bgColorArr={bgColorArr}
             show={show}
-            output={show.output}
-            onGenImage={onGenImage}
             setShow={setShow}
           />
           <Footer show={show} locales={locales} />

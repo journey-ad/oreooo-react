@@ -1,44 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react'
 import intl from 'react-intl-universal';
+import {bgColorArr, sources, downloadImage, capitalizeFirstLetter, getRndInteger } from '../utils'
 import './Container.styl'
 
 let imgUrl, images = {}
-const sources = {
-  O: require('../assets/images/O.png'),
-  R: require('../assets/images/R.png'),
-  Ob: require('../assets/images/Ob.png')
-}
-
-function downloadImage() {
-  const a = document.createElement('a');
-  a.href = imgUrl;
-  a.download = 'oreo.png';
-  a.dispatchEvent(new MouseEvent('click', {}));
-}
-
-function capitalizeFirstLetter(string) {
-  return string.charAt(0).toUpperCase() + string.slice(1);
-}
-
-function showImage() {
-  window.open(imgUrl);
-}
-
-function isIOS() {
-  const u = window.navigator.userAgent;
-  const isiOS = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/);
-  return false;
-}
-
-function getRndInteger(min, max) {
-  return Math.floor(Math.random() * (max - min)) + min;
-}
 
 const Container = (props) => {
   const { setShow } = props
   const { loading, output } = props.show
   const [oreoArr, setOreoArr] = useState([])
-  // const [imgUrl, setImgUrl] = useState('')
   const oreoCanvas = useRef()
 
   function backToInput() {
@@ -148,33 +118,18 @@ const Container = (props) => {
         str = 'r';
       }
       arr.push(str)
-      // for (let j = 0; j < Math.floor(Math.random() * 4) + 1; j++) {
-      //   console.log(i, str, j);
-      //   strAdd(str);
-      // }
     }
     strAdd(arr)
-    // if (oreoArr[oreoArr.length - 1] === '-') {
-    //   let _tmp = oreoArr
-    //   _tmp.pop()Î
-    //   setOreoArr([..._tmp])
-    // }
-    // if (oreoArr.length === 0) {
-    //   console.log(11, oreoArr)
-    //   getRandom();
-    // }
   }
 
   function generateImage() {
     if (oreoArr.length > 0) {
-      // const that = this;
       setShow({ loading: true, output: false });
-      // const oreoArr = oreoArr;
       const drawArr = [];
 
       // Delete '-' at the end
       if (oreoArr[oreoArr.length - 1] === '-') {
-        setOreoArr([...oreoArr].pop())
+        setOreoArr([...oreoArr].slice(0, -1))
       }
 
       // Canvas height calculation
@@ -213,9 +168,7 @@ const Container = (props) => {
   }
 
   function loadImages() {
-    // const that = this;
     // Set background color
-    const { bgColorArr } = props;
     document.documentElement.style.setProperty(
       '--bg-color',
       bgColorArr[Math.floor(Math.random() * bgColorArr.length)]
@@ -292,14 +245,7 @@ const Container = (props) => {
         <div className="output-image">
           <canvas width="240rem" height="500rem" ref={oreoCanvas} id="oreoCanvas"></canvas>
         </div>
-        {
-          isIOS() &&
-          <div onClick={showImage} className="btn">{intl.get('output_show')}</div>
-        }
-        {
-          !isIOS() &&
-          <div onClick={downloadImage} className="btn">{intl.get('output_save')}</div>
-        }
+        <div onClick={() => { downloadImage(imgUrl) }} className="btn">{intl.get('output_save')}</div>
         <div onClick={backToInput} className="btn">{intl.get('output_back')}</div>
       </div>
     </div>
