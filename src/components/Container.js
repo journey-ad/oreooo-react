@@ -1,29 +1,35 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import intl from 'react-intl-universal';
-import {bgColorArr, sources, downloadImage, capitalizeFirstLetter, getRndInteger } from '../utils'
+import { sources, downloadImage, capitalizeFirstLetter, getRndInteger } from '../utils' // 从封装的工具库中导入一些工具函数
 import './Container.styl'
 
-let imgUrl, images = {}
+let imgUrl, cachedImages = {} // 定义生成的图片地址与缓存的Image对象
 
 const Container = (props) => {
-  const { setShow } = props
+  const { setShow } = props // 从props中接收setShow方法
   const { loading, output } = props.show
-  const [oreoArr, setOreoArr] = useState([])
-  const oreoCanvas = useRef()
+  const [oreoArr, setOreoArr] = useState([]) // 定义state oreoArr
+  const oreoCanvas = useRef() // 使用useRef取到组件ref
 
-  function backToInput() {
+  /**
+   * 返回输入界面
+   */
+  const backToInput = useCallback(() => {
     setShow({ loading: false, output: false });
-    setOreoArr([])
-    imgUrl = '';
-  }
+    setOreoArr([]) // 重置oreoArr为空
+    imgUrl = ''; // 重置生成图片地址为空
+  }, [setShow])
 
+  /**
+   * 返回oreoArr对应的可读文案
+   */
   function oreoStr() {
     let str = ''
-    oreoArr.forEach((item, index) => {
+    oreoArr.forEach((item, index) => { // 遍历oreoArr并拼接字符串
       switch (item) {
         case 'O':
         case 'Ob':
-          str += intl.get('basic_o')
+          str += intl.get('basic_o') // 使用intl.get取到对应的多语言文本
           break;
         case 'R':
           str += intl.get('basic_r')
@@ -34,42 +40,30 @@ const Container = (props) => {
           break;
       }
     })
-    return capitalizeFirstLetter(str)
+    return capitalizeFirstLetter(str) // 首字母大写
   }
 
-  function keyEvent(ev) {
-    // console.log(oreoArr, ev.keyCode);
-    if (!loading && !output) {
-      // input Page
-      switch (ev.keyCode) {
-        case 79:
-          strAdd('o');
-          break;
-        case 82:
-          strAdd('r');
-          break;
-        case 8:
-          strAdd('-1');
-          break;
-        case 32:
-        case 189:
-          strAdd('-');
-          break;
-        case 13:
-          generateImage();
-          break;
-        default:
-          break;
+  /**
+   * 生成随机内容
+   */
+  function getRandom() {
+    let arr = []
+    for (let i = 0; i < getRndInteger(5, 8); i++) {
+      const random = Math.random() * 10;
+      let str = '';
+      if (random < 1) {
+        str = '-';
+      } else if (random < 6) {
+        str = 'o';
+      } else {
+        str = 'r';
       }
-    } else if (!loading && output) {
-      // output Page
-      if (ev.keyCode === 8) {
-        backToInput();
-      }
+      arr.push(str)
     }
+    strAdd(arr)
   }
 
-  function strAdd(str) {
+  const strAdd = useCallback((str) => {
     let arr = [...oreoArr]
     if (typeof str === 'string') str = [str]
     str.forEach(character => {
@@ -103,26 +97,9 @@ const Container = (props) => {
     })
 
     setOreoArr(arr)
-  }
+  }, [oreoArr])
 
-  function getRandom() {
-    let arr = []
-    for (let i = 0; i < getRndInteger(5, 8); i++) {
-      const random = Math.random() * 10;
-      let str = '';
-      if (random < 1) {
-        str = '-';
-      } else if (random < 6) {
-        str = 'o';
-      } else {
-        str = 'r';
-      }
-      arr.push(str)
-    }
-    strAdd(arr)
-  }
-
-  function generateImage() {
+  const generateImage = useCallback(() => {
     if (oreoArr.length > 0) {
       setShow({ loading: true, output: false });
       const drawArr = [];
@@ -138,7 +115,7 @@ const Container = (props) => {
         const thisLayer = oreoArr[index];
         if (thisLayer !== '-') {
           const drawItem = {
-            image: images[thisLayer],
+            image: cachedImages[thisLayer],
             x: thisLayer === 'R' ? 10 : 0,
             y: height,
             width: thisLayer === 'R' ? 220 : 240,
@@ -165,44 +142,69 @@ const Container = (props) => {
         setShow({ loading: false, output: true });
       }, 1000);
     }
-  }
+  }, [oreoArr, setShow])
 
-  function loadImages() {
-    // Set background color
-    document.documentElement.style.setProperty(
-      '--bg-color',
-      bgColorArr[Math.floor(Math.random() * bgColorArr.length)]
-    );
-    const cacheImages = {};
+  // 缓存图片
+  useEffect(() => {
+    const images = {}; // 存储缓存图片
 
     let index = 0;
     const attCount = Object.getOwnPropertyNames(sources).length;
     for (const imgItem in sources) {
-      cacheImages[imgItem] = new Image();
-      cacheImages[imgItem].onload = () => {
+      images[imgItem] = new Image();
+      images[imgItem].onload = () => {
         index++;
         if (index === attCount - 1) {
-          images = cacheImages
+          cachedImages = images
           window.setTimeout(() => {
             setShow({ loading: false, output: false });
           }, 1000);
           console.log('Image loaded.');
         }
       };
-      cacheImages[imgItem].src = sources[imgItem];
+      images[imgItem].src = sources[imgItem];
     }
-  }
+  }, [setShow])
 
+  // 处理点击事件
   useEffect(() => {
+    const keyEvent = (ev) => { // 事件处理方法
+      // console.log(oreoArr, ev.keyCode);
+      if (!loading && !output) {
+        // input Page
+        switch (ev.keyCode) {
+          case 79:
+            strAdd('o');
+            break;
+          case 82:
+            strAdd('r');
+            break;
+          case 8:
+            strAdd('-1');
+            break;
+          case 32:
+          case 189:
+            strAdd('-');
+            break;
+          case 13:
+            generateImage();
+            break;
+          default:
+            break;
+        }
+      } else if (!loading && output) {
+        // output Page
+        if (ev.keyCode === 8) {
+          backToInput();
+        }
+      }
+    }
+
     window.addEventListener('keyup', keyEvent, false);
     return () => {
       window.removeEventListener('keyup', keyEvent, false);
     }
-  }, [oreoArr, loading, output])
-
-  useEffect(() => {
-    loadImages()
-  }, [])
+  }, [oreoArr, loading, output, strAdd, generateImage, backToInput])
 
   return (
     <div className="container" style={{ display: loading ? 'none' : 'block' }}>
@@ -210,18 +212,18 @@ const Container = (props) => {
         !output &&
         <div className="design">
           <div className="icon tooltip">
-            <span className="tooltiptext">{intl.getHTML('tooltip')}</span>
+            <span className="tooltiptext">{intl.getHTML('tooltip')}</span> {/* 使用intl.getHTML方法传入多语言html */}
           </div>
           <div className="title">
             <div className="meta">{intl.get('input_meta')}</div>
             {
-              oreoArr.length > 0 &&
+              oreoArr.length > 0 && // 若输入框有内容，则显示可读内容
               <div className="input str">
                 <span>{oreoStr()}</span>
               </div>
             }
             {
-              oreoArr.length === 0 &&
+              oreoArr.length === 0 && // 否则显示占位字符
               <div className="input str placeholder">
                 <span>{intl.get('input_placeholder')}</span>
                 <img className="icon" onClick={getRandom} src={require('../assets/images/random.svg')} alt="random" />
@@ -243,7 +245,7 @@ const Container = (props) => {
           <div className="output str">{oreoStr()}</div>
         </div>
         <div className="output-image">
-          <canvas width="240rem" height="500rem" ref={oreoCanvas} id="oreoCanvas"></canvas>
+          <canvas width="240rem" height="500rem" ref={oreoCanvas} id="oreoCanvas"></canvas> {/* 画布作为ref */}
         </div>
         <div onClick={() => { downloadImage(imgUrl) }} className="btn">{intl.get('output_save')}</div>
         <div onClick={backToInput} className="btn">{intl.get('output_back')}</div>

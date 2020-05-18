@@ -31,7 +31,7 @@ export const showImage = (imgUrl) => {
 export const isIOS = () => {
   const u = window.navigator.userAgent;
   const isiOS = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/);
-  return false;
+  return isiOS;
 }
 
 export const getRndInteger = (min, max) => {
